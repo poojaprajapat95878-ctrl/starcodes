@@ -1,14 +1,4 @@
-/**
- *
- * -----------------------------------------------------------------------------
- *
- * Template : Reeni Personal Portfolio HTML Template
- * Author : themes-park
- * Author URI : https://themes-park.com/ 
- *
- * -----------------------------------------------------------------------------
- *
- **/
+
 
 (function ($) {
     'use strict';
@@ -19,29 +9,56 @@
     $(form).submit(function (e) {
         e.preventDefault();
 
-        // Form data serialize + phone field যুক্ত করা
-        var formData = $(form).serialize() + "&phone=" + $('#contact-phone').val();
+        // Spinner start
+        var spinner = $('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+        var submitBtn = $(form).find('button[type="submit"]');
+        submitBtn.prop('disabled', true).append(spinner);
 
-        $.ajax({
-            type: 'POST',
-            url: $(form).attr('action'),
-            data: formData
-        })
-        .done(function (response) {
-            $(formMessages).removeClass('error').addClass('success').text(response);
+        // Honeypot check
+        if ($('#website').val()) {
+            $(formMessages).removeClass('success').addClass('error').text('Spam detected.');
+            submitBtn.prop('disabled', false);
+            spinner.remove();
+            return;
+        }
 
-            // ইনপুট ফিল্ড ক্লিয়ার করা
-            $('#contact-name, #contact-email, #subject, #contact-message, #contact-phone').val('');
-        })
-        .fail(function (data) {
-            $(formMessages).removeClass('success').addClass('error');
 
-            if (data.responseText !== '') {
-                $(formMessages).text(data.responseText);
-            } else {
-                $(formMessages).text('Oops! An error occurred and your message could not be sent.');
-            }
-        });
+
+        // Form data serialize
+        var formData = $(form).serialize();
+        var attempt = 0;
+        var maxAttempts = 2;
+
+        function sendAjax() {
+            $.ajax({
+                type: 'POST',
+                url: $(form).attr('action'),
+                data: formData
+            })
+            .done(function (response) {
+                $(formMessages).removeClass('error').addClass('success').text(response);
+                $('#contact-name, #contact-email, #subject, #contact-message, #contact-phone').val('');
+                $('#consent').prop('checked', false);
+                submitBtn.prop('disabled', false);
+                spinner.remove();
+            })
+            .fail(function (data) {
+                attempt++;
+                if (attempt <= maxAttempts) {
+                    setTimeout(sendAjax, 1000); // Retry after 1s
+                } else {
+                    $(formMessages).removeClass('success').addClass('error');
+                    if (data.responseText !== '') {
+                        $(formMessages).text(data.responseText);
+                    } else {
+                        $(formMessages).text('Oops! An error occurred and your message could not be sent.');
+                    }
+                    submitBtn.prop('disabled', false);
+                    spinner.remove();
+                }
+            });
+        }
+        sendAjax();
     });
 
 })(jQuery);

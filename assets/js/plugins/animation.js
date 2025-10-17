@@ -1,8 +1,4 @@
-/*
- * TMP Animation JS
- * (c) 2025 Themes-Park
- * Released under the themes-park.net
- */
+
 
 // Class names for different scroll and animation states
 const TMP_SCROLL_ACTIVATION = "tmp-scroll-trigger";
